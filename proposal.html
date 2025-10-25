@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Will you be my girlfriend? 💖</title>
+
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Usage: edit the VARIABLES block in the script to change names, colors, or toggle sounds -->
+  <style>
+    :root{
+      --bg1: #fff0f3; /* creamy */
+      --bg2: #fff6f8;
+      --accent: #ff6b8a; /* pink-red */
+      --accent-2: #ff9eb3;
+      --soft: #ffd6e0;
+      --text: #6b2530;
+      --card-radius: 20px;
+    }
+
+    html,body{
+      height:100%;
+      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:var(--text);
+    }
+
+    /* Floating hearts/backdrop */
+    .float-wrap{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+      z-index:0;
+    }
+    .heart{
+      position:absolute;
+      width:18px;
+      height:18px;
+      opacity:0.85;
+      transform:translateY(0) scale(1);
+      will-change:transform,opacity;
+    }
+
+    /* Center card */
+    .hero-outer{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:2rem;
+      z-index:1;
+    }
+    .hero-card{
+      position:relative;
+      width:100%;
+      max-width:760px;
+      border-radius:var(--card-radius);
+      padding:2.4rem;
+      box-shadow:0 10px 30px rgba(107,37,48,0.12);
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,245,247,0.95));
+      overflow:hidden;
+    }
+
+    /* Bunny accent (top-left) */
+    .bunny-badge{
+      position:absolute;
+      left:18px;
+      top:18px;
+      display:flex;
+      gap:.5rem;
+      align-items:center;
+      font-size:.95rem;
+      color:var(--accent);
+      z-index:3;
+    }
+
+    h1.main-q{
+      font-family: 'Dancing Script', cursive;
+      font-size:clamp(2rem, 4.2vw, 3.2rem);
+      margin-bottom:.3rem;
+      color:var(--accent);
+      text-shadow: 0 4px 18px rgba(255,107,138,0.12);
+    }
+
+    p.lead-note{
+      margin-bottom:1.2rem;
+      font-size:1.02rem;
+      color:#6b3b45;
+    }
+
+    /* Buttons area */
+    .btn-yes{
+      background: linear-gradient(135deg,var(--accent),var(--accent-2));
+      border: none;
+      color:white;
+      font-weight:600;
+      border-radius:14px;
+      padding:.9rem 1.6rem;
+      box-shadow: 0 8px 18px rgba(255,107,138,0.18);
+      transition: transform .12s ease, box-shadow .12s ease;
+      z-index:3;
+    }
+    .btn-yes:active{ transform: scale(.98); }
+    .btn-no{
+      border-radius:12px;
+      padding:.72rem 1.2rem;
+      border: 2px solid rgba(107,37,48,0.08);
+      background:transparent;
+      color:#7a3942;
+      transition: transform .18s cubic-bezier(.2,.9,.3,1), left .22s ease, top .22s ease;
+      position: absolute; /* repositioned via JS inside .btn-area */
+      z-index:3;
+    }
+
+    /* container for the buttons - keeps relative positioning */
+    .btn-area{
+      position:relative;
+      height:96px; /* more vertical room for movements */
+      margin-top: .6rem;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:16px;
+    }
+
+    /* small helper text */
+    .hint{
+      font-size:.9rem;
+      color:#8a4950;
+      margin-top:1rem;
+    }
+
+    /* modal overlay styling */
+    .celebrate-overlay{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(255,240,245,0.92);
+      z-index:40;
+    }
+    .celebrate-box{
+      background:white;
+      padding:1.4rem 1.6rem;
+      border-radius:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.12);
+      max-width:420px;
+      text-align:center;
+    }
+    .celebrate-box h2{ font-family:'Dancing Script',cursive; color:var(--accent); font-size:2rem; margin-bottom:.2rem; }
+    .celebrate-box p{ color:#6b3b45; margin-bottom:1rem; }
+
+    /* small responsive tweaks */
+    @media (max-width:576px){
+      .hero-card{ padding:1.6rem; }
+      .btn-area { height:140px; } /* more vertical room on small screens */
+      .btn-yes{ width:85%; max-width:360px; }
+      /* keep noBtn absolutely positioned so it can dodge; JS ensures it stays visible */
+      .btn-no{ position:absolute; }
+    }
+
+    /* heart icon style used in inline SVG */
+    .svg-heart { filter: drop-shadow(0 6px 12px rgba(255,107,138,0.08)); }
+  </style>
+</head>
+<body>
+  <!-- floating hearts (decor) -->
+  <div class="float-wrap" id="floatWrap" aria-hidden="true"></div>
+
+  <main class="hero-outer">
+    <section class="hero-card" id="heroCard" role="region" aria-labelledby="mainQuestion">
+      <div class="bunny-badge" aria-hidden="true">
+        <!-- cute bunny svg -->
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 2c0 2.2-1.8 4-4 4" stroke="#FF8FAB" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"/>
+          <ellipse cx="8.5" cy="11.5" rx="6.5" ry="7.5" fill="#FFF0F3"></ellipse>
+          <circle cx="9" cy="11" r="1.1" fill="#FF8FAB"></circle>
+        </svg>
+        <strong style="font-weight:600">Hey Shai</strong>
+      </div>
+
+      <div style="position:relative; z-index:3; text-align:center;">
+        <h1 id="mainQuestion" class="main-q" aria-live="polite">Will you be my girlfriend?</h1>
+        <p class="lead-note">I made this just for you — not something I grabbed from the internet. Love, <strong></strong> 💘</p>
+
+        <!-- Buttons area - Yes is static, No is positioned absolutely inside this area -->
+        <div class="btn-area" id="btnArea" aria-hidden="false">
+          <!-- YES button: put first so Tab lands here first -->
+          <button id="yesBtn" class="btn btn-yes" type="button" aria-label="Yes, I will be your girlfriend">
+            ❤️ Yes, of course!
+          </button>
+
+          <!-- NO button: absolute positioning inside btn-area - JS will move it -->
+          <button id="noBtn" class="btn btn-no" type="button" aria-label="No, I don't want to" tabindex="0">
+            No 😭
+          </button>
+
+        </div>
+
+        <div class="hint">Tip: If the No button is shy, try clicking Yes instead 😉</div>
+      </div>
+
+      <!-- canvas used for confetti -->
+      <canvas id="confettiCanvas" style="position:absolute; inset:0; pointer-events:none; z-index:20;"></canvas>
+    </section>
+  </main>
+
+  <!-- celebration overlay (hidden by default) -->
+  <div id="celebrateOverlay" class="celebrate-overlay" style="display:none;" role="dialog" aria-labelledby="celebrateTitle" aria-modal="true">
+    <div class="celebrate-box" role="document">
+      <h2 id="celebrateTitle">Shai said yes! 💘</h2>
+      <p>Yay! Hadi is the happiest person alive. Let's celebrate — pick a date or message me. 🌸</p>
+      <button id="closeCelebrate" class="btn btn-outline-secondary">Close</button>
+    </div>
+  </div>
+
+  <!-- Inline JS: behavior + variables -->
+  <script>
+  /*******************************
+   * VARIABLES - Edit these only *
+   *******************************/
+  const CONFIG = {
+    HER_NAME: 'Shai',            // shown in the top badge
+    MY_NAME: 'Hadi',             // used in messages
+    SOUND_ENABLED: true,         // set to false to mute boops & chime
+    NO_PROXIMITY: 88,            // px: how close mouse can get before No moves
+    MIN_DISTANCE_FROM_YES: 125,  // px: minimum center-to-center distance between buttons to avoid overlap
+    HEART_COUNT: 12              // number of floating hearts in background
+  };
+
+  // apply names quickly (in case you want to change them in CONFIG)
+  document.addEventListener('DOMContentLoaded', ()=> {
+    const badge = document.querySelector('.bunny-badge strong');
+    if(badge) badge.textContent = `Hey ${CONFIG.HER_NAME}`;
+
+    // update main texts if you want dynamic substitution later
+    const mainQ = document.getElementById('mainQuestion');
+    if(mainQ) mainQ.textContent = 'Will you be my girlfriend?';
+    const lead = document.querySelector('.lead-note');
+    if(lead) lead.innerHTML = `I made this just for you — not something I grabbed from the internet. Love, <strong>${CONFIG.MY_NAME}</strong> 💘`;
+    // celebrate texts
+    const celebrateTitle = document.getElementById('celebrateTitle');
+    if(celebrateTitle) celebrateTitle.textContent = `${CONFIG.HER_NAME} said yes! 💘`;
+    const celebrateParagraph = document.querySelector('.celebrate-box p');
+    if(celebrateParagraph) celebrateParagraph.textContent = `Yay! ${CONFIG.MY_NAME} is the happiest person alive. Let's celebrate — pick a date or message me. 🌸`;
+  });
+
+  /*******************************
+   * Utilities / small sounds
+   *******************************/
+  function beep(freq=880, time=0.06, vol=0.06){
+    if(!CONFIG.SOUND_ENABLED) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.value = vol;
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start();
+      setTimeout(()=>{ o.stop(); ctx.close(); }, time*1000);
+    } catch(e){}
+  }
+
+  /*******************************
+   * Floating hearts backdrop
+   *******************************/
+  function createFloatingHearts(){
+    const wrap = document.getElementById('floatWrap');
+    if(!wrap) return;
+    const count = CONFIG.HEART_COUNT;
+    for(let i=0;i<count;i++){
+      const el = document.createElement('div');
+      el.className = 'heart';
+      el.style.left = Math.random()*100 + '%';
+      el.style.top = (Math.random()*100 - 40) + '%';
+      el.style.opacity = 0.5 + Math.random()*0.5;
+      el.style.transform = `translateY(0) scale(${0.9+Math.random()*0.6})`;
+      el.innerHTML = `<svg class="svg-heart" viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+        <path d="M12 21s-7.5-4.94-10-7.39C-0.19 9.93 4.1 4 8.5 6.48 10.21 7.47 12 9.28 12 9.28s1.79-1.81 3.5-2.8C19.9 4 24.19 9.93 22 13.61 19.5 16.06 12 21 12 21z" fill="${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()}"/>
+      </svg>`;
+      wrap.appendChild(el);
+
+      // animate
+      const dur = 8000 + Math.random()*7000;
+      const delay = Math.random()*3000;
+      el.animate([
+        { transform: `translateY(0) scale(1)`, opacity: el.style.opacity },
+        { transform: `translateY(-${120 + Math.random()*160}px) scale(1.05)`, opacity: 0 }
+      ], { duration: dur, iterations: Infinity, delay: delay });
+    }
+  }
+
+  /*******************************
+   * Confetti (simple) - Canvas
+   *******************************/
+  const confetti = (function(){
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    window.addEventListener('resize', ()=> { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
+
+    function Particle(x,y,dx,dy,size,color){
+      this.x = x; this.y = y; this.dx = dx; this.dy = dy; this.size = size; this.color = color; this.t = 0;
+    }
+    Particle.prototype.step = function(){
+      this.x += this.dx; this.y += this.dy; this.dy += 0.12; this.t += 1;
+    };
+    Particle.prototype.draw = function(){
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.t*0.08);
+      ctx.fillStyle = this.color;
+      ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+      ctx.restore();
+    };
+
+    let parts = [], running = false;
+    function start(x,y){
+      parts = [];
+      const colors = ['#FF6B8A','#FF9EB3','#FFD6E0','#fff0f3','#FFB3C6'];
+      for(let i=0;i<80;i++){
+        const s = 6 + Math.random()*9;
+        parts.push(new Particle(x, y, (Math.random()-0.5)*8, -6 - Math.random()*6, s, colors[Math.floor(Math.random()*colors.length)]));
+      }
+      if(!running) { running = true; raf(); }
+    }
+    function raf(){
+      if(!running) return;
+      ctx.clearRect(0,0,W,H);
+      for(let i=0;i<parts.length;i++){
+        parts[i].step();
+        parts[i].draw();
+      }
+      parts = parts.filter(p=> p.y < H + 40);
+      if(parts.length===0){ running = false; ctx.clearRect(0,0,W,H); return; }
+      requestAnimationFrame(raf);
+    }
+    return { burst: start };
+  })();
+
+  /*******************************
+   * Move-No logic: robust, avoids overlap & off-screen
+   *******************************/
+  (function moveNoModule(){
+    const btnArea = document.getElementById('btnArea');
+    const noBtn = document.getElementById('noBtn');
+    const yesBtn = document.getElementById('yesBtn');
+    const heroCard = document.getElementById('heroCard');
+
+    if(!btnArea || !noBtn || !yesBtn) return;
+
+    // initial placement: position No to the right of Yes on wide screens, slightly above on mobile
+    function placeInitial(){
+      const areaRect = btnArea.getBoundingClientRect();
+      const yesRect = yesBtn.getBoundingClientRect();
+
+      // reset transforms
+      noBtn.style.transition = '';
+      noBtn.style.left = '';
+      noBtn.style.top = '';
+
+      if(window.innerWidth > 576){
+        // try to place No to the right of Yes with a safe gap
+        const relativeLeft = (yesRect.right - areaRect.left) + 18;
+        const maxLeft = Math.max(10, areaRect.width - noBtn.offsetWidth - 12);
+        noBtn.style.left = Math.min(relativeLeft, maxLeft) + 'px';
+        noBtn.style.top = Math.max(8, (areaRect.height - noBtn.offsetHeight)/2) + 'px';
+      } else {
+        // on small screens: Yes wide, No floats near the top-right inside btn-area
+        const maxLeft = Math.max(10, areaRect.width - noBtn.offsetWidth - 12);
+        noBtn.style.left = maxLeft + 'px';
+        noBtn.style.top = '10px';
+      }
+    }
+
+    // compute a random position inside btnArea that doesn't overlap Yes and stays visible.
+    function randomGoodPosition(){
+      const areaRect = btnArea.getBoundingClientRect();
+      const yesRect = yesBtn.getBoundingClientRect();
+      const noRect = noBtn.getBoundingClientRect();
+
+      // area relative coordinates
+      const areaW = Math.max(160, areaRect.width);
+      const areaH = Math.max(80, areaRect.height);
+
+      // button dims
+      const noW = Math.max(64, noRect.width || noBtn.offsetWidth || 72);
+      const noH = Math.max(36, noRect.height || noBtn.offsetHeight || 36);
+
+      // We'll attempt up to N tries to find a good location
+      const maxTries = 40;
+      for(let t=0;t<maxTries;t++){
+        const left = Math.floor(Math.random()*(areaW - noW - 12)) + 6; // 6px padding
+        const top = Math.floor(Math.random()*(areaH - noH - 6)) + 6;
+
+        // compute center distance from yes's center
+        const yesCenterX = yesRect.left + yesRect.width/2;
+        const yesCenterY = yesRect.top + yesRect.height/2;
+        const candidateCenterX = areaRect.left + left + noW/2;
+        const candidateCenterY = areaRect.top + top + noH/2;
+        const dx = candidateCenterX - yesCenterX;
+        const dy = candidateCenterY - yesCenterY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist >= CONFIG.MIN_DISTANCE_FROM_YES){
+          // ensure visible within heroCard
+          const heroRect = heroCard.getBoundingClientRect();
+          const absLeft = areaRect.left + left;
+          const absTop = areaRect.top + top;
+          if(absLeft >= heroRect.left + 8 && (absLeft + noW) <= heroRect.right - 8 && absTop >= heroRect.top + 8 && (absTop + noH) <= heroRect.bottom - 8){
+            return {left, top};
+          }
+        }
+      }
+      // fallback: place at right-bottom inside area
+      return {
+        left: Math.max(6, areaW - noW - 10),
+        top: Math.max(6, areaH - noH - 10)
+      };
+    }
+
+    // animate move with left/top
+    function moveNo(instant=false){
+      const pos = randomGoodPosition();
+      if(instant){
+        noBtn.style.transition = 'none';
+        noBtn.style.left = pos.left + 'px';
+        noBtn.style.top = pos.top + 'px';
+        // restore transition after a tick
+        setTimeout(()=> noBtn.style.transition = '', 20);
+      } else {
+        noBtn.style.left = pos.left + 'px';
+        noBtn.style.top = pos.top + 'px';
+      }
+      if(CONFIG.SOUND_ENABLED) beep(720, 0.06, 0.04);
+    }
+
+    // When the pointer gets near the No button, move it
+    function onPointerMove(e){
+      const rect = noBtn.getBoundingClientRect();
+      const px = e.clientX;
+      const py = e.clientY;
+      const centerX = rect.left + rect.width/2;
+      const centerY = rect.top + rect.height/2;
+      const dX = Math.abs(px - centerX);
+      const dY = Math.abs(py - centerY);
+      const close = (dX < CONFIG.NO_PROXIMITY) && (dY < CONFIG.NO_PROXIMITY);
+      if(close){
+        moveNo();
+      }
+    }
+
+    // keyboard handling: when No receives focus, immediately move it and send focus to Yes
+    function onNoFocus(e){
+      moveNo(true);
+      setTimeout(()=> yesBtn.focus(), 60);
+    }
+
+    // If the user clicks the No button, prevent it and move
+    function onNoClick(e){
+      e.preventDefault();
+      moveNo();
+    }
+
+    // Attach events
+    document.addEventListener('mousemove', onPointerMove);
+    noBtn.addEventListener('mouseenter', ()=> moveNo());
+    noBtn.addEventListener('focus', onNoFocus);
+    noBtn.addEventListener('click', onNoClick);
+
+    window.addEventListener('resize', ()=> placeInitial());
+    // initial place after rendering
+    setTimeout(placeInitial, 80);
+    window.addEventListener('load', ()=> { placeInitial(); });
+
+    // expose a helper for debugging: window._moveNo = moveNo;
+    window._moveNo = moveNo;
+  })();
+
+  /*******************************
+   * Yes button: celebration flow
+   *******************************/
+  (function yesFlow(){
+    const yesBtn = document.getElementById('yesBtn');
+    const celebrateOverlay = document.getElementById('celebrateOverlay');
+    const closeCelebrate = document.getElementById('closeCelebrate');
+
+    function celebrateAt(x,y){
+      // confetti burst
+      confetti.burst(x,y);
+      // small jingle
+      if(CONFIG.SOUND_ENABLED) beep(1100, 0.14, 0.06);
+      // show overlay
+      celebrateOverlay.style.display = 'flex';
+    }
+
+    yesBtn.addEventListener('click', (ev)=>{
+      const rect = yesBtn.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.top + rect.height/2;
+      celebrateAt(cx, cy);
+    });
+
+    closeCelebrate.addEventListener('click', ()=>{
+      document.getElementById('celebrateOverlay').style.display = 'none';
+    });
+
+    // Allow keyboard activation (Enter/Space)
+    yesBtn.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        yesBtn.click();
+      }
+    });
+  })();
+
+  // init small features
+  createFloatingHearts();
+
+  // Accessibility enhancement: ensure tab order lands on Yes before No
+  (function tabOrder(){
+    const yes = document.getElementById('yesBtn');
+    const no = document.getElementById('noBtn');
+    if(yes) yes.setAttribute('tabindex','0');
+    if(no) no.setAttribute('tabindex','0');
+  })();
+
+  </script>
+
+  <!-- Bootstrap JS bundle (optional but included for potential modal/tooltip usage) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
